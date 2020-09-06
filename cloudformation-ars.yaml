@@ -1,0 +1,476 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Parameters:
+  KeyName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Default: "utopia"
+    Description: Name of an existing EC2 KeyPair to enable SSH access to the ECS instances.
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Default: "vpc-8e022cf4"
+    Description: Select a VPC that allows instances access to the Internet.
+  SubnetId:
+    Type: List<AWS::EC2::Subnet::Id>
+    Default: "subnet-c5acb399,subnet-df4490d1,subnet-f1e449bc,subnet-f34a52dd,subnet-fa7253c4,subnet-fdddcf9a"
+    Description: Select at least two subnets in your selected VPC.
+  DesiredCapacity:
+    Type: Number
+    Default: "3"
+    Description: Number of instances to launch in your ECS cluster.
+  MaxSize:
+    Type: Number
+    Default: "3"
+    Description: Maximum number of instances that can be launched in your ECS cluster.
+  InstanceType:
+    Description: EC2 instance type
+    Type: String
+    Default: t2.micro
+    AllowedValues:
+      [
+        t2.micro,
+        t2.small,
+        t2.medium,
+        t2.large,
+        m3.medium,
+        m3.large,
+        m3.xlarge,
+        m3.2xlarge,
+        m4.large,
+        m4.xlarge,
+        m4.2xlarge,
+        m4.4xlarge,
+        m4.10xlarge,
+        c4.large,
+        c4.xlarge,
+        c4.2xlarge,
+        c4.4xlarge,
+        c4.8xlarge,
+        c3.large,
+        c3.xlarge,
+        c3.2xlarge,
+        c3.4xlarge,
+        c3.8xlarge,
+        r3.large,
+        r3.xlarge,
+        r3.2xlarge,
+        r3.4xlarge,
+        r3.8xlarge,
+        i2.xlarge,
+        i2.2xlarge,
+        i2.4xlarge,
+        i2.8xlarge,
+      ]
+    ConstraintDescription: Please choose a valid instance type.
+Mappings:
+  AWSRegionToAMI:
+    us-east-1:
+      AMIID: ami-eca289fb
+    us-east-2:
+      AMIID: ami-446f3521
+    us-west-1:
+      AMIID: ami-9fadf8ff
+    us-west-2:
+      AMIID: ami-7abc111a
+    eu-west-1:
+      AMIID: ami-a1491ad2
+    eu-central-1:
+      AMIID: ami-54f5303b
+    ap-northeast-1:
+      AMIID: ami-9cd57ffd
+    ap-southeast-1:
+      AMIID: ami-a900a3ca
+    ap-southeast-2:
+      AMIID: ami-5781be34
+
+Resources:
+  #ECS CLuster
+  ECSCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: ARS-ECS-Cluster
+  #ECS Security Group
+  EcsSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: ECS Security Group
+      VpcId: !Ref "VpcId"
+  EcsSecurityGroupHTTPinbound:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref "EcsSecurityGroup"
+      IpProtocol: tcp
+      FromPort: "80"
+      ToPort: "80"
+      CidrIp: 0.0.0.0/0
+  EcsSecurityGroupSSHinbound:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref "EcsSecurityGroup"
+      IpProtocol: tcp
+      FromPort: "22"
+      ToPort: "22"
+      CidrIp: 0.0.0.0/0
+  EcsSecurityGroupALBports:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref "EcsSecurityGroup"
+      IpProtocol: tcp
+      FromPort: "31000"
+      ToPort: "61000"
+      SourceSecurityGroupId: !Ref "EcsSecurityGroup"
+  #Task Definition
+  CounterTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Join ["", [!Ref "AWS::StackName", -ecs-counter-app]]
+      ContainerDefinitions:
+        - Name: utopiacounter
+          Cpu: "256"
+          Essential: "true"
+          Image: "160164793641.dkr.ecr.us-east-1.amazonaws.com/utopia/counter:latest"
+          Memory: "512"
+          PortMappings:
+            - ContainerPort: 8081
+              HostPort: 80
+  OnlineTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Join ["", [!Ref "AWS::StackName", -ecs-online-app]]
+      ContainerDefinitions:
+        - Name: utopiaonline
+          Cpu: "256"
+          Essential: "true"
+          Image: "160164793641.dkr.ecr.us-east-1.amazonaws.com/utopia/online:latest"
+          Memory: "512"
+          PortMappings:
+            - ContainerPort: 9090
+              HostPort: 80
+  UserTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Join ["", [!Ref "AWS::StackName", -ecs-user-app]]
+      ContainerDefinitions:
+        - Name: utopiauser
+          Cpu: "256"
+          Essential: "true"
+          Image: "160164793641.dkr.ecr.us-east-1.amazonaws.com/utopia/user:latest"
+          Memory: "512"
+          PortMappings:
+            - ContainerPort: 9999
+              HostPort: 80
+  #ECS ALB
+  ECSALB:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: ECSALB
+      Scheme: internet-facing
+      LoadBalancerAttributes:
+        - Key: idle_timeout.timeout_seconds
+          Value: "30"
+      Subnets: !Ref "SubnetId"
+      SecurityGroups: [!Ref "EcsSecurityGroup"]
+
+  ALBListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    DependsOn: ECSServiceRole
+    Properties:
+      DefaultActions:
+        - Type: forward
+          ForwardConfig:
+            TargetGroups:
+              - TargetGroupArn: !Ref "utopiaArsCounterTg"
+                Weight: 1
+              - TargetGroupArn: !Ref "utopiaArsOnlineTg"
+                Weight: 2
+              - TargetGroupArn: !Ref "utopiaArsUserTg"
+                Weight: 3
+      LoadBalancerArn: !Ref "ECSALB"
+      Port: "80"
+      Protocol: HTTP
+  #Listener Rule: Implement Listener Rules for
+  ECSALBListenerRuleCounter:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    DependsOn: ALBListener
+    Properties:
+      Actions:
+        - Type: forward
+          TargetGroupArn: !Ref "utopiaArsCounterTg"
+      Conditions:
+        - Field: path-pattern
+          Values: [/api/counter*]
+      ListenerArn: !Ref "ALBListener"
+      Priority: 1
+  ECSALBListenerRuleOnline:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    DependsOn: ALBListener
+    Properties:
+      Actions:
+        - Type: forward
+          TargetGroupArn: !Ref "utopiaArsOnlineTg"
+      Conditions:
+        - Field: path-pattern
+          Values: [/api/online*]
+      ListenerArn: !Ref "ALBListener"
+      Priority: 2
+  ECSALBListenerRuleUser:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    DependsOn: ALBListener
+    Properties:
+      Actions:
+        - Type: forward
+          TargetGroupArn: !Ref "utopiaArsUserTg"
+      Conditions:
+        - Field: path-pattern
+          Values: [/api/account*]
+      ListenerArn: !Ref "ALBListener"
+      Priority: 3
+  #Security Group
+  ECSAutoScalingGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      VPCZoneIdentifier: !Ref "SubnetId"
+      LaunchConfigurationName: !Ref "ContainerInstances"
+      MinSize: "1"
+      MaxSize: !Ref "MaxSize"
+      DesiredCapacity: !Ref "DesiredCapacity"
+    CreationPolicy:
+      ResourceSignal:
+        Timeout: PT15M
+    UpdatePolicy:
+      AutoScalingReplacingUpdate:
+        WillReplace: "true"
+  #target groups
+  utopiaArsCounterTg:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    DependsOn: ECSALB
+    Properties:
+      HealthCheckIntervalSeconds: 30
+      HealthCheckPath: /api/counter/itineraries
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 5
+      Name: utopiaArsCounterTG
+      Port: 80
+      Protocol: HTTP
+      UnhealthyThresholdCount: 2
+      VpcId: !Ref "VpcId"
+  utopiaArsOnlineTg:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    DependsOn: ECSALB
+    Properties:
+      HealthCheckIntervalSeconds: 30
+      HealthCheckPath: /api/online
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 5
+      Name: utopiaArsOnlineTG
+      Port: 80
+      Protocol: HTTP
+      UnhealthyThresholdCount: 2
+      VpcId: !Ref "VpcId"
+  utopiaArsUserTg:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    DependsOn: ECSALB
+    Properties:
+      HealthCheckIntervalSeconds: 30
+      HealthCheckPath: /api/account
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 5
+      Name: utopiaArsUserTG
+      Port: 80
+      Protocol: HTTP
+      UnhealthyThresholdCount: 2
+      VpcId: !Ref "VpcId"
+  #instances that hold ecs
+  ContainerInstances:
+    Type: AWS::AutoScaling::LaunchConfiguration
+    Properties:
+      ImageId: !FindInMap [AWSRegionToAMI, !Ref "AWS::Region", AMIID]
+      SecurityGroups: [!Ref "EcsSecurityGroup"]
+      InstanceType: !Ref "InstanceType"
+      IamInstanceProfile: !Ref "EC2InstanceProfile"
+      KeyName: !Ref "KeyName"
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash -xe
+          echo ECS_CLUSTER=${ECSCluster} >> /etc/ecs/ecs.config
+          yum install -y aws-cfn-bootstrap
+          /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ECSAutoScalingGroup --region ${AWS::Region}
+  #ECS service
+  ARSCounterService:
+    Type: AWS::ECS::Service
+    DependsOn: ALBListener
+    Properties:
+      Cluster: !Ref "ECSCluster"
+      DeploymentConfiguration:
+        MaximumPercent: 200
+        MinimumHealthyPercent: 100
+      DeploymentController:
+        Type: ECS
+      DesiredCount: "1"
+      LoadBalancers:
+        - ContainerName: "utopiacounter"
+          ContainerPort: "8081"
+          TargetGroupArn: !Ref "utopiaArsCounterTg"
+      Role: !Ref "ECSServiceRole"
+      TaskDefinition: !Ref "CounterTaskDefinition"
+  ARSOnlineService:
+    Type: AWS::ECS::Service
+    DependsOn: ALBListener
+    Properties:
+      Cluster: !Ref "ECSCluster"
+      DeploymentConfiguration:
+        MaximumPercent: 200
+        MinimumHealthyPercent: 100
+      DeploymentController:
+        Type: ECS
+      DesiredCount: "1"
+      LoadBalancers:
+        - ContainerName: "utopiaonline"
+          ContainerPort: "9090"
+          TargetGroupArn: !Ref "utopiaArsOnlineTg"
+      Role: !Ref "ECSServiceRole"
+      TaskDefinition: !Ref "OnlineTaskDefinition"
+  ARSUserService:
+    Type: AWS::ECS::Service
+    DependsOn: ALBListener
+    Properties:
+      Cluster: !Ref "ECSCluster"
+      DeploymentConfiguration:
+        MaximumPercent: 200
+        MinimumHealthyPercent: 100
+      DeploymentController:
+        Type: ECS
+      DesiredCount: "1"
+      LoadBalancers:
+        - ContainerName: "utopiauser"
+          ContainerPort: "9999"
+          TargetGroupArn: !Ref "utopiaArsUserTg"
+      Role: !Ref "ECSServiceRole"
+      TaskDefinition: !Ref "UserTaskDefinition"
+  #ECS IAM ROLE
+  ECSServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: [ecs.amazonaws.com]
+            Action: ["sts:AssumeRole"]
+      Path: /
+      Policies:
+        - PolicyName: ecs-service
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  [
+                    "elasticloadbalancing:DeregisterInstancesFromLoadBalancer",
+                    "elasticloadbalancing:DeregisterTargets",
+                    "elasticloadbalancing:Describe*",
+                    "elasticloadbalancing:RegisterInstancesWithLoadBalancer",
+                    "elasticloadbalancing:RegisterTargets",
+                    "ec2:Describe*",
+                    "ec2:AuthorizeSecurityGroupIngress",
+                    "ecr:GetAuthorizationToken",
+                    "ecr:BatchCheckLayerAvailability",
+                    "ecr:GetDownloadUrlForLayer",
+                    "ecr:GetRepositoryPolicy",
+                    "ecr:DescribeRepositories",
+                    "ecr:ListImages",
+                    "ecr:DescribeImages",
+                    "ecr:BatchGetImage",
+                    "ecr:GetLifecyclePolicy",
+                    "ecr:GetLifecyclePolicyPreview",
+                    "ecr:ListTagsForResource",
+                    "ecr:DescribeImageScanFindings",
+                  ]
+                Resource: "*"
+  #EC2 role
+  EC2Role:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: [ec2.amazonaws.com]
+            Action: ["sts:AssumeRole"]
+      Path: /
+      Policies:
+        - PolicyName: ecs-service
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  [
+                    "ecs:CreateCluster",
+                    "ecs:DeregisterContainerInstance",
+                    "ecs:DiscoverPollEndpoint",
+                    "ecs:Poll",
+                    "ecs:RegisterContainerInstance",
+                    "ecs:StartTelemetrySession",
+                    "ecs:Submit*",
+                    "logs:CreateLogStream",
+                    "logs:PutLogEvents",
+                    "ecr:GetAuthorizationToken",
+                    "ecr:BatchCheckLayerAvailability",
+                    "ecr:GetDownloadUrlForLayer",
+                    "ecr:GetRepositoryPolicy",
+                    "ecr:DescribeRepositories",
+                    "ecr:ListImages",
+                    "ecr:DescribeImages",
+                    "ecr:BatchGetImage",
+                    "ecr:GetLifecyclePolicy",
+                    "ecr:GetLifecyclePolicyPreview",
+                    "ecr:ListTagsForResource",
+                    "ecr:DescribeImageScanFindings",
+                  ]
+                Resource: "*"
+  #AutoScalingRole
+  AutoscalingRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: [application-autoscaling.amazonaws.com]
+            Action: ["sts:AssumeRole"]
+      Policies:
+        - PolicyName: service-autoscaling
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  [
+                    "application-autoscaling:*",
+                    "cloudwatch:DescribeAlarms",
+                    "cloudwatch:PutMetricAlarm",
+                    "ecs:DescribeServices",
+                    "ecs:UpdateService",
+                  ]
+                Resource: "*"
+  EC2InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles: [!Ref "EC2Role"]
+Outputs:
+  counterecsservice:
+    Value: !Ref "ARSCounterService"
+  onlineecsservice:
+    Value: !Ref "ARSOnlineService"
+  userecsservice:
+    Value: !Ref "ARSUserService"
+  ecscluster:
+    Value: !Ref "ECSCluster"
+  ECSALB:
+    Description: Your ALB DNS URL
+    Value: !Join ["", [!GetAtt [ECSALB, DNSName]]]
+  countertaskdef:
+    Value: !Ref "CounterTaskDefinition"
+  onlinetaskdef:
+    Value: !Ref "OnlineTaskDefinition"
+  usertaskdef:
+    Value: !Ref "UserTaskDefinition"

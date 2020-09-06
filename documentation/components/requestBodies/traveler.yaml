@@ -1,0 +1,53 @@
+---
+type: object
+required:
+- first_name
+- last_name
+- dob
+- phone
+- email
+- street
+- city
+- state
+- postal_code
+- country
+description: "Create a traveler with a name, birthdate, phone number, email address, and street address."
+properties:
+  first_name:
+    type: string
+    minLength: 1
+    maxLength: 45
+  last_name:
+    type: string
+    minLength: 1
+    maxLength: 45
+  dob:
+    type: string
+    format: date-time
+  phone:
+    type: string
+    format: phone
+  email:
+    type: string
+    format: email
+  street:
+    type: string
+    minLength: 1
+    maxLength: 45
+  city:
+    type: string
+    minLength: 1
+    maxLength: 45
+  state:
+    type: string
+    minLength: 1
+    maxLength: 45
+  postal_code:
+    type: string
+    minLength: 1
+    maxLength: 45
+  country:
+    type: string
+    minLength: 1
+    maxLength: 45
+...

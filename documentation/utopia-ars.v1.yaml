@@ -1,0 +1,79 @@
+openapi: 3.0.0
+info:
+  title: Utopia Airline Reservation System
+  version: "1.0"
+  contact:
+    name: Utopia Support
+    url: "https://support.utopia.local"
+    email: support@utopia.local
+  termsOfService: "https://utopia.local/tos"
+  license:
+    name: License
+    url: "https://utopia.local/license"
+  description: |-
+    This API is designed to manage ticket reservations within Utopia Airlines. It can be used by:
+
+    * online users
+    * Travel agents
+    * Airline counter agents.
+servers:
+  - url: " https://v2z3jctj5b.execute-api.us-east-1.amazonaws.com/PROD/api"
+
+paths:
+
+  /account:
+    $ref: "components/paths/account.yaml"
+  /account/register:
+    $ref: "components/paths/account-register.yaml"
+
+  /online/itineraries:
+    $ref: "components/paths/online-itineraries.yaml"
+  /online/itineraries?id={itinerary_id}:
+    $ref: "components/paths/online-itinerary_itineraryId.yaml"
+  /online/itinerary/{itinerary_id}/tickets?id={ticket_id}:
+    $ref: "components/paths/online-itinerary-tickets_ticketId.yaml"
+  /online/flights/search:
+    $ref: "components/paths/online-flights-search.yaml"
+
+  /agent/itineraries:
+    $ref: "components/paths/agent-itineraries.yaml"
+  /agent/itineraries/{id}:
+    $ref: "components/paths/agent-itineraries_itineraryId.yaml"
+
+  /agent/tickets/{id}:
+    $ref: "components/paths/agent-tickets_ticketId.yaml"
+
+  /agent/travelers:
+    $ref: "components/paths/agent-travelers.yaml"
+  /agent/travelers/{id}:
+    $ref: "components/paths/agent-travelers_id.yaml"
+  /agent/travelers/search:
+    $ref: "components/paths/agent-travelers-search.yaml"
+  /agent/flights/search:
+    $ref: "components/paths/agent-flights-search.yaml"
+
+  /counter/itineraries:
+    $ref: "components/paths/counter-itineraries.yaml"
+  /counter/itineraries?id={itinerary_id}:
+    $ref: "components/paths/counter-itineraries_itineraryId.yaml"
+  /counter/itineraries/travelers/{traveler_id}:
+    $ref: "components/paths/counter-itineraries-travelers_travelerId.yaml"
+  /counter/itineraries/tickets/{ticket_id}:
+    $ref: "components/paths/counter-itineraries-tickets_ticketId.yaml"
+  /counter/travelers:
+    $ref: "components/paths/counter-travelers.yaml"
+  /counter/travelers/search:
+    $ref: "components/paths/counter-travelers-search.yaml"
+  /counter/flights/search:
+    $ref: "components/paths/counter-flights-search.yaml"
+
+components:
+  schemas: {}
+  securitySchemes:
+    JWT:
+      type: http
+      scheme: bearer
+      description: "? Self hosted auth server | AWS Cognito ?"
+
+security:
+  - JWT: [] # From name specified under securitySchemes

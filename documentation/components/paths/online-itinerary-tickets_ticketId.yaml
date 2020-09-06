@@ -1,0 +1,34 @@
+---
+get:
+  tags:
+  - "Online"
+  summary: "Return a ticket by ticket id"  
+  operationId: "get-counter-itineraries-tickets_ticketId"
+  produces:
+  - "application/xml"
+  - "application/json"
+  parameters:
+  - in: "query"
+    name: id
+    description: "Ticket Id"
+    required: true
+    schema:
+        type: string
+    example: "/tickets?id=9"
+  responses:
+    200:
+      description: "successful operation"
+      content:
+        application/json:
+          schema:
+            $ref: "../definitions/ticket.yaml"
+        application/xml:
+          schema:
+            $ref: "../definitions/ticket.yaml"
+    400:
+      description: "Invalid id supplied."
+    403:
+      description: "Access token is missing or invalid"
+    404:
+      description: "Ticket not found."
+...

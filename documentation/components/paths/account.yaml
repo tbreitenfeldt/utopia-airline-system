@@ -1,0 +1,38 @@
+---
+post:
+  tags:
+    - Account
+  operationId: post-account-login
+  summary: "Login to an existing user account."
+  description: "This endpoint authenticates a submitted login attempt and returns a JWT token if successful."
+  responses:
+    201:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            description: "Authentication successful."
+            properties:
+              result:
+                type: string
+              token:
+                type: string
+                description: Placeholder for JWT token.
+            example:
+                result: "success"
+                token: "TOKEN HERE"
+    401:
+      description: "Authorization information is missing or invalid."
+
+  requestBody:
+    description: "Send credentials for authentication"
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: "../requestBodies/account.yaml"
+      application/xml:
+        schema:
+          $ref: "../requestBodies/account.yaml"
+...

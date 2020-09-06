@@ -1,0 +1,38 @@
+---
+post:
+  tags:
+  - "Agent"
+  summary: "Return a list of travelers in the database based on provided parameters. At least one parameter is required."
+  operationId: "post-Agent-travelers__email__phone__lastName"
+  produces:
+  - "application/xml"
+  - "application/json"
+  requestBody:
+    description: "Search for a traveler based on provided parameters. At least one parameter is required"
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: "../requestBodies/traveler.yaml"
+      application/xml:
+        schema:
+          $ref: "../requestBodies/traveler.yaml"
+  responses:
+    200:
+      description: "successful operation"
+      content:
+        application/json:
+          schema:
+            type: "array"
+            items:
+              $ref: "../definitions/traveler.yaml"
+        application/xml:
+          schema:
+            type: "array"
+            items:
+              $ref: "../definitions/traveler.yaml"
+    400:
+      description: "invalid operation"
+    403:
+      description: "Access token is missing or invalid"
+...

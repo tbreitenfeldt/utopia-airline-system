@@ -1,0 +1,65 @@
+---
+get:
+  tags:
+  - "Online"
+  summary: "Return travelerId, agencyId, userId, and total price for an itinerary."  
+  operationId: "get-online-itineraries_itineraryId"
+  produces:
+  - "application/xml"
+  - "application/json"
+  parameters:
+  - name: "itinerary_id"
+    in: "path"
+    description: "Itinerary Id"
+    required: true
+    schema:
+      type: integer
+      format: int64
+
+  responses:
+    200:
+      description: "Successful operation"
+      content:
+        application/json:
+          schema:
+            $ref: "../definitions/itinerary.yaml"
+        application/xml:
+          schema:
+            $ref: "../definitions/itinerary.yaml"
+    400:
+      description: "Invalid id supplied"
+    403:
+      description: "Access token is missing or invalid"
+    404:
+      description: "itinerary not found"
+
+delete:
+  tags:
+  - "Online"
+  summary: "Update the status of an itinerary to canceled"
+  description: "Update the status for all tickets associated with the itinerary to canceled."
+  operationId: "put-online-itineraries_itineraryId"
+  consumes:
+  - "application/xml"
+  - "application/json"
+  produces:
+  - "application/xml"
+  - "application/json"
+  parameters:
+  - name: "itinerary_id"
+    in: "path"
+    description: "Itinerary Id"
+    required: true
+    schema:
+      type: integer
+      format: int64
+  responses:
+    204:
+      description: "successful operation, no content"
+    400:
+      description: "Invalid id supplied"
+    403:
+      description: "Access token is missing or invalid"
+    404:
+      description: "itinerary not found"
+...

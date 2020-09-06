@@ -1,0 +1,72 @@
+---
+get:
+  tags:
+  - "Agent"
+  summary: "Return itinerary information from itinerary id"
+  description: "Return travelerId, agencyId, userId, and total price for an itinerary."
+  operationId: "get-agent-itineraries_itineraryId"
+  produces:
+  - "application/xml"
+  - "application/json"
+  parameters:
+  - name: "itinerary_id"
+    in: "path"
+    description: "Itinerary Id"
+    required: true
+    schema:
+      type: integer
+      format: int64
+    example: "/agent/itineraries/9"
+
+  responses:
+    200:
+      description: "Successful operation"
+      content:
+        application/json:
+          schema:
+            $ref: "../definitions/itinerary.yaml"
+        application/xml:
+          schema:
+            $ref: "../definitions/itinerary.yaml"
+    400:
+      description: "Invalid parameter supplied"
+    401:
+      description: "Access token is missing"
+    403:
+      description: "Access token is invalid"
+    404:
+      description: "Itinerary not found"
+
+delete:
+  tags:
+  - "Agent"
+  summary: "Update the status of an itinerary to canceled"
+  description: "Update the status for all tickets associated with the itinerary to canceled. This is a soft delete, so the user will no longer be able to view "
+  operationId: "put-agent-itineraries_itineraryId"
+  consumes:
+  - "application/xml"
+  - "application/json"
+  produces:
+  - "application/xml"
+  - "application/json"
+  parameters:
+  - name: "itinerary_id"
+    in: "path"
+    description: "Itinerary Id"
+    required: true
+    schema:
+      type: integer
+      format: int64
+    example: "/agent/itineraries/9"
+  responses:
+    204:
+      description: "Success"
+    400:
+      description: "Invalid parameter supplied"
+    401:
+      description: "Access token is missing or invalid"
+    403:
+      description: "Access token is invalid"
+    404:
+      description: "itinerary not found"
+...

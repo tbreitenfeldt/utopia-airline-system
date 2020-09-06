@@ -1,0 +1,41 @@
+---
+post:
+  tags:
+  - "Agent"
+  summary: "Return a list of flights based on parameters"
+  operationId: "post-agent-flights"
+  consumes:
+  - "application/xml"
+  - "application/json"
+  produces:
+  - "application/xml"
+  - "application/json"
+  requestBody:
+    description: "Search for spacific flights based on provided parameters. Provide at least 1 search parameter."
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: "../requestBodies/flight.yaml"
+      application/xml:
+        schema:
+          $ref: "../requestBodies/flight.yaml"
+  responses:
+    200:
+      description: "Successful operation"
+      content:
+        application/json:
+          schema:
+            type: "array"
+            items:
+              $ref: "../definitions/flight.yaml"
+        application/xml:
+          schema:
+            type: "array"
+            items:
+              $ref: "../definitions/flight.yaml"
+    400:
+      description: "Invalid operation"
+    403:
+      description: "Access token is missing or invalid"
+...

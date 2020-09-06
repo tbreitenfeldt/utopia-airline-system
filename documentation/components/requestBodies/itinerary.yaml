@@ -1,0 +1,30 @@
+---
+type: object 
+required:
+- user_id
+- travelers
+description: |-
+  Contains  a user_id for who created the itineraries, and a collection of travelers each associated with their individual itinerary.
+
+  Note:  
+  An agency_id is not required, but as a travel agent posts, it will require that an agency_id is included in the request, this will be enforced by the API.  
+  Also, as Counter and online user types, an agency_id is not required, and should not be included at all, which will be enforced by the API.
+properties:
+  id:
+    type: integer
+    format: int64
+  user_id:
+    type: integer
+    format: int64
+  agency_id:
+    type: integer
+    format: int64
+  traveler_id:
+    type: integer
+    format: int64
+  tickets:
+    type: array
+    nullable: true
+    items: 
+      $ref: "../definitions/ticket.yaml"
+...

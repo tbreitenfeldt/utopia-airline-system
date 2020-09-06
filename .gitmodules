@@ -1,0 +1,20 @@
+[submodule "utopia-user-microservice"]
+	path = utopia-user-microservice
+	url = ttps://github.com/tbreitenfeldt/utopia-user-microservice.git
+	branch = master
+[submodule "utopia-react-ui"]
+	path = utopia-react-ui
+	url = https://github.com/tbreitenfeldt/utopia-react-ui.git
+	branch = master
+[submodule "utopia-agent-microservice"]
+	path = utopia-agent-microservice
+	url = https://github.com/tbreitenfeldt/utopia-agent-microservice.git
+	branch = master
+[submodule "utopia-counter-microservice"]
+	path = utopia-counter-microservice
+	url = https://github.com/tbreitenfeldt/utopia-counter-microservice.git
+	branch = master
+[submodule "utopia-online-microservice"]
+	path = utopia-online-microservice
+	url = https://github.com/tbreitenfeldt/utopia-online-microservice.git
+	branch = master

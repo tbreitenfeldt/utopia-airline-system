@@ -1,0 +1,110 @@
+---
+get:
+  tags:
+  - "Agent"
+  summary: "Get traveler record by id"
+  operationId: "get-Agent-travelers"
+  consumes:
+  - "application/xml"
+  - "application/json"
+  produces:
+  - "application/xml"
+  - "application/json"
+  responses:
+    200:
+      description: "Get travelers"
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - id
+            description: "Get traveler record id "
+            properties:
+              id:
+                type: integer
+                format: int64
+            example:
+              id: 0
+              first_name: "fname"
+              last_name: "lname"
+              dob: "2020-02-24T21:27:26.695Z"
+              phone: "xxx-xxx-xxxx"
+              email: "user@example.com"
+              street: "string"
+              city: "string"
+              state: "string"
+              postal_code: "string"
+              country: "string"
+
+        application/xml:
+          schema:
+            type: object
+            required:
+            - id
+            description: "The traveler record by id"
+            properties:
+              id:
+                type: integer
+                format: int64
+            example:
+              id: 0
+    400:
+      description: "Invalid parameter posted"
+    403:
+      description: "Access token is missing or invalid"
+
+put:
+  tags:
+  - "Agent"
+  summary: "Update traveler record"
+  operationId: "put-Agent-travelers"
+  consumes:
+  - "application/xml"
+  - "application/json"
+  produces:
+  - "application/xml"
+  - "application/json"
+  responses:
+    204:
+      description: "traveler update"
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - id
+            description: "The id of the updated traveler"
+            properties:
+              id:
+                type: integer
+                format: int64
+            example:
+              id: 0
+        application/xml:
+          schema:
+            type: object
+            required:
+            - id
+            description: "The id of the updated traveler"
+            properties:
+              id:
+                type: integer
+                format: int64
+            example:
+              id: 0
+    400:
+      description: "Invalid parameter posted"
+    403:
+      description: "Access token is missing or invalid"
+  requestBody:
+    description: "update existing traveler"
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: "../requestBodies/traveler.yaml"
+      application/xml:
+        schema:
+          $ref: "../requestBodies/traveler.yaml"
+...

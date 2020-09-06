@@ -1,0 +1,72 @@
+---
+get:
+  tags:
+  - "Counter"
+  summary: "Return information about a traveler"
+  description: "Return first name, last name, date of birth, etc. about a traveler."
+  operationId: "get-counter-travelers_travelerId"
+  produces:
+  - "application/xml"
+  - "application/json"
+  parameters:
+  - name: "traveler_id"
+    in: "path"
+    description: "Traveler Id"
+    required: true
+    schema:
+      type: integer
+      format: int64
+  responses:
+    200:
+      description: "successful operation"
+      content:
+        application/json:
+          schema:
+            $ref: "../definitions/traveler.yaml"
+        application/xml:
+          schema:
+            $ref: "../definitions/traveler.yaml"
+    400:
+      description: "Invalid id supplied"
+    403:
+      description: "Access token is missing or invalid"
+    404:
+      description: "Traveler not found"
+    
+put:
+  tags:
+  - "Counter"
+  summary: "Update information about a traveler"
+  description: "Update first name, last name, date of birth, etc. about a traveler."
+  operationId: "put-counter-travelers_travelerId"
+  consumes:
+  - "application/xml"
+  - "application/json"
+  parameters:
+  - name: "traveler_id"
+    in: "path"
+    description: "Traveler Id"
+    required: true
+    schema:
+      type: integer
+      format: int64
+  requestBody:
+    description: "Information about traveler that needs to be updated"
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: "../requestBodies/traveler.yaml"
+      application/xml:
+        schema:
+          $ref: "../requestbodies/traveler.yaml"
+  responses:
+    204:
+      description: "successful operation"
+    400:
+      description: "Invalid id supplied"
+    403:
+      description: "Access token is missing or invalid"
+    404:
+      description: "Traveler not found"    
+...

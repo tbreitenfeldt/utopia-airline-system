@@ -1,0 +1,50 @@
+---
+required:
+  - id
+  - first_name
+  - last_name
+  - dob
+  - phone
+  - email
+  - street
+  - country
+  - state
+  - city
+  - postal_code
+type: object
+properties:
+  id:
+    type: integer
+    format: int64
+  first_name:
+    type: string
+  last_name:
+    type: string
+  dob:
+    type: date
+  phone:
+    type: string
+  email:
+    type: string
+  street:
+    type: string
+  country:
+    type: string
+  state:
+    type: string
+  city:
+    type: string
+  postal_code:
+    type: string
+example:
+  first_name: "first name"
+  last_name: "last name"
+  dob: "2020-01-01"
+  phone: "123-456-7890"
+  email: "example@domain.com"
+  street: "street"
+  country: "country"
+  state: "state"
+  city: " city"
+  postal_code: "00000-0000"
+...
